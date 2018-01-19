@@ -2,10 +2,13 @@ library(ROCR)
 library(tidyverse)
 
 
-df <- all_data %>% 
-	filter(!is.na(odds1)) %>% 
-	data_to_model() %>% 
-	cbind(read_csv("v2_pred.csv"))
+source("common.R")
+
+
+df <- cbind(
+	read_csv("test2.csv"),
+	read_csv("v2.1_pred.csv")
+)
 
 
 # Marathonbet

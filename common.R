@@ -1,5 +1,6 @@
 all_ranks <- c("Y", "O", "S", "K", "M", "J", "Ms", "Sd", "Jd", "Jk")
 
+
 # switches "1" <-> "2" columns of {data}
 # if {by} is provided, only switches columns when {by1} > {by2}
 switch_columns <- function(data, by = NA) {
@@ -26,3 +27,12 @@ switch_columns <- function(data, by = NA) {
 	
 	df
 }
+
+
+# removes records unused in training & evaluation
+historical <- function(data) data %>% 
+	filter(
+		basho > 1989, # remove first 6 years
+		kimarite != "fusen", # remove walkovers
+		!is.na(rikishi1_win) # remove upcoming bouts
+	)
