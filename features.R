@@ -1,3 +1,6 @@
+library(stringr)
+
+
 # adds information from {banzuke}
 add_banzuke_info <- function(data, banzuke) {
 	banzuke_relevant_cols <- c("basho", "id", "birth_date", "height", "weight", "prev", "prev_w", "prev_l")

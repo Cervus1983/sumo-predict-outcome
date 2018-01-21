@@ -23,21 +23,6 @@ all_data <- results %>%
 	left_join(., odds)
 
 
-# drops extraneous columns
-drop_extra_cols <- function(data) data %>% 
-	select(
-		-one_of(
-			c(
-				"basho", "day",
-				"rikishi1_id", "rikishi1_rank", "rikishi1_shikona", "rikishi1_result", "rikishi1_birth_date", "rikishi1_prev",
-				"kimarite",
-				"rikishi2_id", "rikishi2_rank", "rikishi2_shikona", "rikishi2_result", "rikishi2_win", "rikishi2_birth_date", "rikishi2_prev",
-				"odds1", "odds2"
-			)
-		)
-	)
-
-	
 # train & test data sets
 all_data %>% 
 	historical() %>% 

@@ -1,19 +1,4 @@
-library(data.world)
-set_config(cfg_env(auth_token_var = "DW_API_TOKEN"))
-
-library(tidyverse)
-
-options(stringsAsFactors = FALSE)
-
-dfapply <- function(...) do.call(rbind, lapply(...))
-
-dataset_as_data_frame <- function(dataset_name) {
-	dataset <- paste(Sys.getenv("DW_USER"), dataset_name, sep = "/")
-	dfapply(
-		map_chr(get_dataset(dataset)$files, "name"),
-		function(file_name) download_file_as_data_frame(dataset, file_name)
-	)
-}
+source("data.world.R")
 
 # banzuke
 banzuke <- dataset_as_data_frame("sumo-banzuke")
