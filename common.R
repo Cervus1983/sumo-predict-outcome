@@ -1,4 +1,4 @@
-all_ranks <- c("Y", "O", "S", "K", "M", "J", "Ms", "Sd", "Jd", "Jk")
+all_ranks <- c("Y", "O", "S", "K", "M", "Bg", "J", "Ms", "Sd", "Jd", "Jk")
 
 
 # switches "1" <-> "2" columns of {data}
@@ -36,6 +36,11 @@ historical <- function(data) data %>%
 		kimarite != "fusen", # remove walkovers
 		!is.na(rikishi1_win) # remove upcoming bouts
 	)
+
+
+# removes bouts outside makuuchi (top division)
+makuuchi <- function(data) data %>% 
+	filter(rikishi1_rank_name < "J" | rikishi2_rank_name < "J")
 
 
 # drops extraneous columns

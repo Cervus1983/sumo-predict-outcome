@@ -49,7 +49,11 @@ parse_rank <- function(data) data %>%
 		rikishi2_rank_level = as.integer(str_extract(rikishi2_rank, "\\d+")),
 		rikishi2_rank_name_prev = ordered(str_extract(rikishi2_prev, "^\\D+"), levels = all_ranks),
 		rikishi2_rank_level_prev = as.integer(str_extract(rikishi2_prev, "\\d+"))
-	)
+	) %>% 
+	replace_na(list(
+		rikishi1_rank_level_prev = 0,
+		rikishi2_rank_level_prev = 0
+	))
 
 
 # adds current tournament form ("0-0" on day 1)
