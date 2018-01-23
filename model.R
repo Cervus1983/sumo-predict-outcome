@@ -16,7 +16,7 @@ source("features.R")
 # complete data set
 all_data <- results %>% 
 	add_banzuke_info(
-		# replace NA height/weight with average values
+		# replace NA height/weight with mean values
 		banzuke %>% 
 			group_by(id) %>% 
 			mutate(
@@ -30,11 +30,7 @@ all_data <- results %>%
 	add_head_to_head() %>% 
 	left_join(., odds)
 
-write_csv(all_data, "all_data.csv")
-
-
-# reading from CSV file causes train(...) to fail
-# all_data <- read_csv("all_data.csv", guess_max = 1e+4)
+saveRDS(all_data, "all_data.rds")
 
 
 # model
@@ -49,6 +45,7 @@ trControl <- trainControl(
 glm_fit <- train(
 	rikishi1_win ~ .,
 	data = all_data %>% 
+		filter(is.na(odds1)) %>% 
 		historical() %>% 
 		makuuchi() %>% 
 		drop_extra_cols() %>% 
@@ -58,23 +55,4 @@ glm_fit <- train(
 	metric = "ROC"
 )
 
-saveRDS(glm_fit, file = "glm_fit.rds")
-
-
-# train & test data sets
-all_data %>% 
-	historical() %>% 
-	filter(is.na(odds1)) %>% 
-	drop_extra_cols() %>% 
-	write_csv(., "train.csv")
-
-all_data %>% 
-	historical() %>% 
-	filter(!is.na(odds1)) %>% 
-	drop_extra_cols() %>% 
-	write_csv(., "test.csv")
-
-all_data %>% 
-	historical() %>% 
-	filter(!is.na(odds1)) %>% 
-	write_csv(., "test2.csv")
+save(glm_fit, file = "glm_fit.Rdata")

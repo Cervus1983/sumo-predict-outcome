@@ -1,27 +1,11 @@
 library(ROCR)
-library(tidyverse)
 
 
 source("common.R")
 
 
-all_data <- read_csv("all_data.csv", guess_max = 1e+4)
-
-test_data <- all_data %>% 
-	filter(
-		!is.na(odds1),
-		!is.na(rikishi1_win)
-	) %>% 
-	mutate_at(vars(contains("odds")), as.numeric)
-
-
-
-
-
-#df <- cbind(
-#	read_csv("test2.csv"),
-#	read_csv("v2.1_pred.csv")
-#)
+all_data <- readRDS("all_data.rds")
+test_data <- all_data %>% filter(!is.na(rikishi1_win), !is.na(odds1))
 
 
 # Marathonbet
@@ -34,14 +18,15 @@ mb_pred <- with(
 )
 
 unlist(performance(mb_pred, "auc")@y.values)
+# 0.623
 
 
 # my model
+load("glm_fit.Rdata")
+
 glm_fit_pred <- predict(
-	readRDS("glm_fit.rds"),
-	newdata = test_data %>% 
-		drop_extra_cols() %>% 
-		select(-rikishi1_win),
+	glm_fit,
+	newdata = test_data,
 	type = "prob"
 )
 
@@ -51,15 +36,7 @@ my_pred <- prediction(
 )
 
 unlist(performance(my_pred, "auc")@y.values)
-
-
-# Amazon ML model
-#az_pred <- prediction(
-#	predictions = df$score,
-#	labels = df$trueLabel
-#)
-
-#unlist(performance(az_pred, "auc")@y.values)
+# 0.638
 
 
 # ROC curves
@@ -68,31 +45,13 @@ plot(performance(my_pred, measure = "tpr", x.measure = "fpr"), add = TRUE, col =
 lines(x = c(0, 1), y = c(0, 1), lty = 2)
 
 
-# hypothetical expected value
-ev_threshold <- .3
-
-df %>% 
-	mutate(
-		ev = score * odds1 - 1,
-		gross = ifelse(
-			ev > ev_threshold,
-			trueLabel * odds1 - 1,
-			0
-		)
-	) %>% 
-	group_by(basho) %>% 
-	summarise(
-		offers = n(),
-		bets = sum(gross != 0),
-		gross = sum(gross)
-	)
-
+# PROFIT
 test_data %>% 
 	mutate(
 		rikishi1_win_prob = glm_fit_pred$yes,
 		ev = rikishi1_win_prob * odds1 - 1,
-		gross = ifelse(ev > ev_threshold, rikishi1_win * odds1 - 1, 0)
-	) %>% View()
+		gross = ifelse(ev > .3, rikishi1_win * odds1 - 1, 0)
+	) %>% 
 	group_by(basho) %>% 
 	summarise(
 		offers = n(),

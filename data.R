@@ -43,14 +43,7 @@ odds <- rbind(odds, switch_columns(odds))
 
 # remove play-offs & walkovers, add day #
 odds <- odds %>% 
-	inner_join(
-		.,
-		results %>% 
-			filter(
-				day %in% 1:15,
-				kimarite != "fusen"
-			)
-	) %>% 
+	inner_join(., results %>% filter(day %in% 1:15, kimarite != "fusen")) %>% 
 		select(
 			basho,
 			day,
