@@ -36,7 +36,7 @@ saveRDS(all_data, "all_data.rds")
 # model
 trControl <- trainControl(
 	method = "cv",
-	number = 3,
+	number = 1,
 	returnResamp = "none",
 	summaryFunction = twoClassSummary,
 	classProbs = TRUE
@@ -55,4 +55,4 @@ glm_fit <- train(
 	metric = "ROC"
 )
 
-save(glm_fit, file = "glm_fit.Rdata")
+save(glm_fit, file = "glm_fit.RData")
