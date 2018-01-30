@@ -29,7 +29,7 @@ unsettled <- results %>%
 
 # upcoming day in top division
 upcoming <- unsettled %>% 
-	filter(day == max(upcoming$day)) %>% 
+	filter(day == max(day)) %>% 
 	makuuchi()
 
 
@@ -49,9 +49,11 @@ current_odds <- "https://www.marathonbet.com/en/betting/Sumo/Japan/?menu=954984"
 	inner_join(., banzuke %>% transmute(basho, rikishi1 = rikishi, rikishi1_id = id)) %>% 
 	inner_join(., banzuke %>% transmute(basho, rikishi2 = rikishi, rikishi2_id = id))
 
+current_odds <- rbind(current_odds, switch_columns(current_odds))
+
 
 # predictions & expected value ----
-load("glm_fit.Rdata")
+# load("glm_fit.Rdata")
 
 inner_join(upcoming, current_odds) %>% 
 	mutate(
