@@ -12,9 +12,12 @@ write_csv(results, "results.csv")
 odds <- dataset_as_data_frame("sumo-wrestling-betting-odds") %>% 
 	mutate(basho = ts %>% substr(., 1, 7) %>% sub("-", ".", .) %>% as.numeric()) %>% 
 	group_by(basho, rikishi1, rikishi2) %>% 
+	arrange(ts) %>% 
 	summarise(
-		odds1 = first(odds1),
-		odds2 = first(odds2)
+		odds1_open = first(odds1),
+		odds2_open = first(odds2),
+		odds1_close = last(odds1),
+		odds2_close = last(odds2)
 	) %>% 
 	ungroup() %>% 
 	# add rikishi id
@@ -49,8 +52,10 @@ odds <- odds %>%
 			day,
 			rikishi1_id,
 			rikishi1_shikona,
-			odds1,
-			odds2,
+			odds1_open,
+			odds2_open,
+			odds1_close,
+			odds2_close,
 			rikishi2_id,
 			rikishi2_shikona
 		)
