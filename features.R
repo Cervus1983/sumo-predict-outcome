@@ -56,6 +56,17 @@ parse_rank <- function(data) data %>%
 	))
 
 
+# NEW FEATURE
+add_rank_vs_rank <- function(data) data %>% 
+	mutate(
+		rank_vs_rank = ifelse(
+			rikishi1_rank_name == "M" & rikishi2_rank_name == "M",
+			recode(sign(rikishi1_rank_level - rikishi2_rank_level) + 2, "M-m", "M-M", "m-M"),
+			paste(rikishi1_rank_name, rikishi2_rank_name, sep = "-")
+		)
+	)
+
+
 # adds current tournament form ("0-0" on day 1)
 add_form <- function(data) data %>% 
 	group_by(basho, rikishi1_id) %>% 
@@ -67,6 +78,38 @@ add_form <- function(data) data %>%
 	mutate(
 		rikishi2_form = lag(rikishi2_result, order_by = day),
 		rikishi2_form = ifelse(is.na(rikishi2_form), "0-0", str_extract(rikishi2_form, "\\d+-\\d+"))
+	)
+
+
+# NEW FEATURES
+add_wins_before <- function(data) data %>% 
+	group_by(basho, rikishi1_id) %>% 
+	arrange(day) %>% 
+	mutate(rikishi1_wins_before = cumsum(rikishi1_win) - rikishi1_win) %>% 
+	group_by(basho, rikishi2_id) %>% 
+	arrange(day) %>% 
+	mutate(rikishi2_wins_before = cumsum(rikishi2_win) - rikishi2_win)
+
+add_win_rate_before <- function(data) data %>% 
+	mutate(
+		rikishi1_win_rate_before = ifelse(day > 1, rikishi1_wins_before / (day - 1), .5),
+		rikishi2_win_rate_before = ifelse(day > 1, rikishi2_wins_before / (day - 1), .5)
+	)
+
+add_win_rate_needed <- function(data) data %>% 
+	mutate(
+		rikishi1_win_rate_needed = (8 - rikishi1_wins_before) / (16 - day),
+		rikishi1_win_rate_needed = ifelse(
+			0 < rikishi1_win_rate_needed & rikishi1_win_rate_needed <= 1,
+			rikishi1_win_rate_needed,
+			0
+		),
+		rikishi2_win_rate_needed = (8 - rikishi2_wins_before) / (16 - day),
+		rikishi2_win_rate_needed = ifelse(
+			0 < rikishi2_win_rate_needed & rikishi2_win_rate_needed <= 1,
+			rikishi2_win_rate_needed,
+			0
+		)
 	)
 
 
@@ -86,4 +129,11 @@ add_head_to_head <- function(data) data %>%
 	select(
 		-rikishi1_win_no_fusen,
 		-rikishi2_win_no_fusen
+	) %>% 
+	mutate(
+		rikishi1_head_to_head_win_rate = ifelse(
+			rikishi1_head_to_head_wins + rikishi2_head_to_head_wins > 0,
+			rikishi1_head_to_head_wins / (rikishi1_head_to_head_wins + rikishi2_head_to_head_wins),
+			.5
+		)
 	)
