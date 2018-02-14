@@ -26,7 +26,11 @@ all_data <- results %>%
 	) %>% 
 	add_age() %>% 
 	parse_rank() %>% 
+	add_rank_vs_rank() %>% # new
 	add_form() %>% 
+	add_wins_before() %>% # new
+	add_win_rate_before() %>% # new
+	add_win_rate_needed() %>% # new
 	add_head_to_head() %>% 
 	left_join(., odds)
 
@@ -34,25 +38,24 @@ saveRDS(all_data, "all_data.rds")
 
 
 # model
-trControl <- trainControl(
-	method = "cv",
-	number = 1,
-	returnResamp = "none",
-	summaryFunction = twoClassSummary,
-	classProbs = TRUE
-)
-
 glm_fit <- train(
-	rikishi1_win ~ .,
+	as.formula(paste("rikishi1_win", "~", paste(glm_predictors, collapse = " + "))),
 	data = all_data %>% 
 		filter(is.na(odds1)) %>% 
 		historical() %>% 
 		makuuchi() %>% 
-		drop_extra_cols() %>% 
+		select(one_of(c(x, "rikishi1_win"))) %>% # drop_extra_cols() %>% 
 		mutate(rikishi1_win = recode(rikishi1_win + 1, "no", "yes")),
 	method = "glm",
-	trControl = trControl,
-	metric = "ROC"
+	trControl = trainControl(
+		returnData = FALSE,
+		returnResamp = "none",
+		classProbs = TRUE,
+		summaryFunction = twoClassSummary,
+		trim = TRUE
+	),
+	metric = "ROC",
+	model = FALSE
 )
 
 save(glm_fit, file = "glm_fit.RData")
