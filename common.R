@@ -46,16 +46,22 @@ makuuchi <- function(data) data %>%
 	filter(rikishi1_rank_name < "J" | rikishi2_rank_name < "J")
 
 
-# drops extraneous columns
-drop_extra_cols <- function(data) data %>% 
-	select(
-		-one_of(
-			c(
-				"basho", "day",
-				"rikishi1_id", "rikishi1_rank", "rikishi1_shikona", "rikishi1_result", "rikishi1_birth_date", "rikishi1_prev",
-				"kimarite",
-				"rikishi2_id", "rikishi2_rank", "rikishi2_shikona", "rikishi2_result", "rikishi2_win", "rikishi2_birth_date", "rikishi2_prev",
-				"odds1", "odds2"
-			)
-		)
-	)
+# models' predictors
+glm_predictors <- c(
+	"rikishi1_height", "rikishi1_weight",
+	"rikishi1_prev_w", "rikishi1_prev_l",
+	"rikishi2_height", "rikishi2_weight",
+	"rikishi2_prev_w", "rikishi2_prev_l",
+	"rikishi1_age", "rikishi2_age",
+	"rikishi1_rank_name", "rikishi1_rank_level",
+	"rikishi1_rank_name_prev", "rikishi1_rank_level_prev",
+	"rikishi2_rank_name", "rikishi2_rank_level",
+	"rikishi2_rank_name_prev", "rikishi2_rank_level_prev",
+	"rikishi1_form", "rikishi2_form",
+	"rikishi1_head_to_head_wins", "rikishi2_head_to_head_wins"
+)
+
+xgboost_predictors <- c(
+	"rikishi1_rank_name", "rikishi1_rank_level",
+	"rikishi2_rank_name", "rikishi2_rank_level"
+)
