@@ -1,3 +1,4 @@
+library(pROC)
 library(tidyverse)
 
 
@@ -62,6 +63,20 @@ glm_predictors <- c(
 )
 
 xgboost_predictors <- c(
+	"rikishi1_height", "rikishi1_weight",
+	"rikishi1_prev_w", "rikishi1_prev_l",
+	"rikishi2_height", "rikishi2_weight",
+	"rikishi2_prev_w", "rikishi2_prev_l",
+	"rikishi1_age", "rikishi2_age",
 	"rikishi1_rank_name", "rikishi1_rank_level",
-	"rikishi2_rank_name", "rikishi2_rank_level"
+	"rikishi1_rank_name_prev", "rikishi1_rank_level_prev",
+	"rikishi2_rank_name", "rikishi2_rank_level", "rikishi2_rank_name_prev",
+	"rikishi2_rank_level_prev",
+	"rank_vs_rank",
+	"rikishi1_form", "rikishi2_form",
+	"rikishi1_wins_before", "rikishi2_wins_before",
+	"rikishi1_win_rate_before", "rikishi2_win_rate_before",
+	"rikishi1_win_rate_needed", "rikishi2_win_rate_needed",
+	"rikishi1_head_to_head_wins", "rikishi2_head_to_head_wins",
+	"rikishi1_head_to_head_win_rate"
 )
