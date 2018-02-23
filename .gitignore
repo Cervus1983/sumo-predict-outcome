@@ -1,9 +1,10 @@
+(delete) *
+
 *.csv
-*.rds
 *.model
-.Rproj.user
-.Rhistory
+*.rds
+
 .RData
 .Renviron
-.Ruserdata
-*.RData
+.Rhistory
+.Rproj.user

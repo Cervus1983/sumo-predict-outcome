@@ -1,63 +1,45 @@
-source("data.world.R")
+source("features.R")
 
-# banzuke
-banzuke <- dataset_as_data_frame("sumo-banzuke")
-write_csv(banzuke, "banzuke.csv")
+# csv.R ->
+banzuke <- read_csv("csv/banzuke.csv")
+results <- read_csv("csv/results.csv")
+odds <- read_csv("csv/odds.csv")
 
-# results
-results <- dataset_as_data_frame("sumo-results")
-write_csv(results, "results.csv")
-
-# odds
-odds <- dataset_as_data_frame("sumo-wrestling-betting-odds") %>% 
-	mutate(basho = ts %>% substr(., 1, 7) %>% sub("-", ".", .) %>% as.numeric()) %>% 
-	group_by(basho, rikishi1, rikishi2) %>% 
-	arrange(ts) %>% 
-	summarise(
-		odds1_open = first(odds1),
-		odds2_open = first(odds2),
-		odds1_close = last(odds1),
-		odds2_close = last(odds2)
-	) %>% 
-	ungroup() %>% 
-	# add rikishi id
-	inner_join(
-		.,
+# -> data.rds
+results %>% 
+	# generate features (requires complete data set)
+	add_banzuke_info(
+		# replace NA height/weight with mean values
 		banzuke %>% 
-			transmute(
-				basho,
-				rikishi1 = rikishi,
-				rikishi1_id = id
+			group_by(id) %>% 
+			mutate(
+				height = ifelse(is.na(height), mean(height, na.rm = TRUE), height),
+				weight = ifelse(is.na(weight), mean(weight, na.rm = TRUE), weight)
 			)
 	) %>% 
-	inner_join(
-		.,
-		banzuke %>% 
-			transmute(
-				basho,
-				rikishi2 = rikishi,
-				rikishi2_id = id
-			)
-	)
-
-# add mirror replica
-source("common.R")
-odds <- rbind(odds, switch_columns(odds))
-
-# remove play-offs & walkovers, add day #
-odds <- odds %>% 
-	inner_join(., results %>% filter(day %in% 1:15, kimarite != "fusen")) %>% 
-		select(
-			basho,
-			day,
-			rikishi1_id,
-			rikishi1_shikona,
-			odds1_open,
-			odds2_open,
-			odds1_close,
-			odds2_close,
-			rikishi2_id,
-			rikishi2_shikona
-		)
-
-write_csv(odds, "odds.csv")
+	add_age() %>% 
+	parse_rank() %>% 
+	add_rank_vs_rank() %>% 
+	add_form() %>% 
+	add_wins_before() %>% 
+	add_win_rate_before() %>% 
+	add_win_rate_needed() %>% 
+	add_head_to_head() %>% 
+	# keep relevant observations
+	filter(
+		basho > 1989, # remove first 6 years
+		kimarite != "fusen", # remove walkovers
+		!is.na(rikishi1_win), # remove upcoming bouts
+		rikishi1_rank_name < "J" | rikishi2_rank_name < "J" # remove bouts outside makuuchi (top division)
+	) %>% 
+	# add odds
+	left_join(., odds) %>% 
+	# extra columns for ML
+	mutate(
+		is_train = is.na(odds1_open),
+		y = recode(rikishi1_win + 1, "no", "yes")
+	) %>% 
+	# character variables -> factors
+	mutate_if(is.character, as.factor) %>% 
+	# save
+	saveRDS("data.rds")

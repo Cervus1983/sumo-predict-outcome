@@ -1,7 +1,8 @@
 library(stringr)
+library(tidyverse)
 
 
-# adds information from {banzuke}
+# information from {banzuke}
 add_banzuke_info <- function(data, banzuke) {
 	banzuke_relevant_cols <- c("basho", "id", "birth_date", "height", "weight", "prev", "prev_w", "prev_l")
 
@@ -37,7 +38,9 @@ add_age <- function(data) data %>%
 	)
 
 
-# adds rank_name & rank_level columns (rank "Y1e" -> rank_name "Y" + rank_level 1)
+# rank_name & rank_level columns (rank "Y1e" -> rank_name "Y" + rank_level 1)
+all_ranks <- c("Y", "O", "S", "K", "M", "Bg", "J", "Ms", "Sd", "Jd", "Jk")
+
 parse_rank <- function(data) data %>% 
 	mutate(
 		rikishi1_rank_name = ordered(str_extract(rikishi1_rank, "^\\D+"), levels = all_ranks),
@@ -56,7 +59,7 @@ parse_rank <- function(data) data %>%
 	))
 
 
-# NEW FEATURE
+# rank "Y1e" + rank "M2w" -> rank_vs_rank "Y-M"
 add_rank_vs_rank <- function(data) data %>% 
 	mutate(
 		rank_vs_rank = ifelse(
@@ -67,7 +70,7 @@ add_rank_vs_rank <- function(data) data %>%
 	)
 
 
-# adds current tournament form ("0-0" on day 1)
+# current tournament form ("0-0" on day 1)
 add_form <- function(data) data %>% 
 	group_by(basho, rikishi1_id) %>% 
 	mutate(
@@ -81,7 +84,7 @@ add_form <- function(data) data %>%
 	)
 
 
-# NEW FEATURES
+# of wins & win rate before this bout
 add_wins_before <- function(data) data %>% 
 	group_by(basho, rikishi1_id) %>% 
 	arrange(day) %>% 
@@ -96,6 +99,7 @@ add_win_rate_before <- function(data) data %>%
 		rikishi2_win_rate_before = ifelse(day > 1, rikishi2_wins_before / (day - 1), .5)
 	)
 
+# win rate needed for "kachi-koshi"
 add_win_rate_needed <- function(data) data %>% 
 	mutate(
 		rikishi1_win_rate_needed = (8 - rikishi1_wins_before) / (16 - day),
@@ -113,7 +117,7 @@ add_win_rate_needed <- function(data) data %>%
 	)
 
 
-# adds historical head-to-head wins (excl. walkovers)
+# historical head-to-head wins & win rate (excl. walkovers)
 add_head_to_head <- function(data) data %>% 
 	arrange(basho, day) %>% 
 	mutate(

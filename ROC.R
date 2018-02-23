@@ -1,30 +1,35 @@
 library(ROCR)
+library(tidyverse)
 
+benchmark_data <- readRDS("benchmark.rds")
+benchmark_pred <- mlr::getBMRPredictions(benchmark_data)
 
-# functions
-source("common.R")
+data <- "data.rds" %>% 
+	readRDS() %>% 
+	filter(!is_train) %>% 
+	transmute(
+		basho,
+		y,
+		mb_open = 1 / odds1_open / (1 / odds1_open + 1 / odds2_open),
+		mb_close = 1 / odds1_close / (1 / odds1_close + 1 / odds2_close),
+		classif.binomial = benchmark_pred[["train"]][["classif.binomial"]][["data"]][["prob.yes"]],
+		classif.xgboost = benchmark_pred[["train"]][["classif.xgboost"]][["data"]][["prob.yes"]]
+	)
+
 textAUC <- function(pred, x, y, col) text(x, y, sprintf("%.3f", unlist(performance(pred, "auc")@y.values)), c(0, 1), col = col, cex = 2)
 
-
-# data set with predictions (created in benchmark.R)
-benchmark_data <- "benchmark_data.rds" %>% 
-	readRDS() %>% 
-	rename(mine = xgboost)
-
-
-# ROC plots with AUC values
 par(mfrow = c(2, 3))
 
 sapply(
-	c(unique(benchmark_data$basho), "Overall"),
+	c(unique(data$basho), "Overall"),
 	function(x) {
-		if (x == "Overall") tmp_data <- benchmark_data else tmp_data <- benchmark_data %>% filter(basho == x)
+		tmp_data <- filter(data, x == "Overall" | basho == x)
 		
 		mb_open <- with(
 			tmp_data,
 			prediction(
 				predictions = mb_open,
-				labels = rikishi1_win
+				labels = y
 			)
 		)
 		
@@ -32,15 +37,15 @@ sapply(
 			tmp_data,
 			prediction(
 				predictions = mb_close,
-				labels = rikishi1_win
+				labels = y
 			)
 		)
 		
 		mine <- with(
 			tmp_data,
 			prediction(
-				predictions = mine,
-				labels = rikishi1_win
+				predictions = classif.xgboost,
+				labels = y
 			)
 		)
 		

@@ -3,7 +3,6 @@ library(data.world)
 set_config(cfg_env(auth_token_var = "DW_API_TOKEN"))
 
 library(tidyverse)
-
 options(stringsAsFactors = FALSE)
 
 # wrapper for data frame concatenation
