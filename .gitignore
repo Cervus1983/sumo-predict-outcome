@@ -3,6 +3,7 @@
 *.csv
 *.model
 *.rds
+*.Rproj
 
 .RData
 .Renviron
