@@ -1,7 +1,8 @@
 library(tidyverse)
 
-benchmark_data <- readRDS("benchmark.rds")
-benchmark_pred <- mlr::getBMRPredictions(benchmark_data)
+benchmark_pred <- "benchmark.rds" %>% 
+	readRDS() %>% 
+	mlr::getBMRPredictions()
 
 data <- "data.rds" %>% 
 	readRDS() %>% 
@@ -10,8 +11,8 @@ data <- "data.rds" %>%
 		basho,
 		y = as.integer(y) - 1,
 		odds1_open,
-		classif.binomial = benchmark_pred[["train"]][["classif.binomial"]][["data"]][["prob.yes"]],
-		classif.xgboost = benchmark_pred[["train"]][["classif.xgboost"]][["data"]][["prob.yes"]]
+		classif.binomial = benchmark_pred[["select(data, -is_train)"]][["classif.binomial.featsel"]][["data"]][["prob.yes"]],
+		classif.xgboost = benchmark_pred[["select(data, -is_train)"]][["classif.xgboost.tuned"]][["data"]][["prob.yes"]]
 	)
 
 ev_threshold <- 1.2

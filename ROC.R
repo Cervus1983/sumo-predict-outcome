@@ -1,8 +1,9 @@
 library(ROCR)
 library(tidyverse)
 
-benchmark_data <- readRDS("benchmark.rds")
-benchmark_pred <- mlr::getBMRPredictions(benchmark_data)
+benchmark_pred <- "benchmark.rds" %>% 
+	readRDS() %>% 
+	mlr::getBMRPredictions()
 
 data <- "data.rds" %>% 
 	readRDS() %>% 
@@ -12,8 +13,8 @@ data <- "data.rds" %>%
 		y,
 		mb_open = 1 / odds1_open / (1 / odds1_open + 1 / odds2_open),
 		mb_close = 1 / odds1_close / (1 / odds1_close + 1 / odds2_close),
-		classif.binomial = benchmark_pred[["train"]][["classif.binomial"]][["data"]][["prob.yes"]],
-		classif.xgboost = benchmark_pred[["train"]][["classif.xgboost"]][["data"]][["prob.yes"]]
+		classif.binomial = benchmark_pred[["select(data, -is_train)"]][["classif.binomial.featsel"]][["data"]][["prob.yes"]],
+		classif.xgboost = benchmark_pred[["select(data, -is_train)"]][["classif.xgboost.tuned"]][["data"]][["prob.yes"]]
 	)
 
 textAUC <- function(pred, x, y, col) text(x, y, sprintf("%.3f", unlist(performance(pred, "auc")@y.values)), c(0, 1), col = col, cex = 2)
@@ -44,7 +45,7 @@ sapply(
 		mine <- with(
 			tmp_data,
 			prediction(
-				predictions = classif.xgboost,
+				predictions = classif.binomial,
 				labels = y
 			)
 		)

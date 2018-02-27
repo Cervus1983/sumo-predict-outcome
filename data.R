@@ -19,15 +19,18 @@ results %>%
 	) %>% 
 	add_age() %>% 
 	parse_rank() %>% 
-	add_rank_vs_rank() %>% 
+	#add_rank_vs_rank() %>% 
 	add_form() %>% 
-	add_wins_before() %>% 
-	add_win_rate_before() %>% 
-	add_win_rate_needed() %>% 
+	add_kachi_koshi() %>% 
+	#add_wins_before() %>% 
+	#add_win_rate_before() %>% 
+	#add_win_rate_needed() %>% 
+	add_streak() %>% 
 	add_head_to_head() %>% 
 	# keep relevant observations
 	filter(
 		basho > 1989, # remove first 6 years
+		day < 16, # remove play-offs
 		kimarite != "fusen", # remove walkovers
 		!is.na(rikishi1_win), # remove upcoming bouts
 		rikishi1_rank_name < "J" | rikishi2_rank_name < "J" # remove bouts outside makuuchi (top division)

@@ -60,69 +60,113 @@ parse_rank <- function(data) data %>%
 
 
 # rank "Y1e" + rank "M2w" -> rank_vs_rank "Y-M"
-add_rank_vs_rank <- function(data) data %>% 
-	mutate(
-		rank_vs_rank = ifelse(
-			rikishi1_rank_name == "M" & rikishi2_rank_name == "M",
-			recode(sign(rikishi1_rank_level - rikishi2_rank_level) + 2, "M-m", "M-M", "m-M"),
-			paste(rikishi1_rank_name, rikishi2_rank_name, sep = "-")
-		)
-	)
+#add_rank_vs_rank <- function(data) data %>% 
+#	mutate(
+#		rank_vs_rank = ifelse(
+#			rikishi1_rank_name == "M" & rikishi2_rank_name == "M",
+#			recode(sign(rikishi1_rank_level - rikishi2_rank_level) + 2, "M-m", "M-M", "m-M"),
+#			paste(rikishi1_rank_name, rikishi2_rank_name, sep = "-")
+#		)
+#	)
 
 
-# current tournament form ("0-0" on day 1)
+# current tournament form ("0-0" on day 1), also split into wins/losses/misses
+# TO DO: take fusens into account
 add_form <- function(data) data %>% 
 	group_by(basho, rikishi1_id) %>% 
 	mutate(
-		rikishi1_form = lag(rikishi1_result, order_by = day),
-		rikishi1_form = ifelse(is.na(rikishi1_form), "0-0", str_extract(rikishi1_form, "\\d+-\\d+"))
+		rikishi1_form = lag(rikishi1_result),
+		rikishi1_form = ifelse(is.na(rikishi1_form), "0-0", sub("\\(.*\\)", "", rikishi1_form)),
+		rikishi1_w = as.integer(str_match(rikishi1_form, "^(\\d+)")[, 2]),
+		rikishi1_l = as.integer(str_match(rikishi1_form, "^\\d+-(\\d+)")[, 2]),
+		rikishi1_m = as.integer(str_match(rikishi1_form, "^\\d+-\\d+-(\\d+)")[, 2])
 	) %>% 
 	group_by(basho, rikishi2_id) %>% 
 	mutate(
-		rikishi2_form = lag(rikishi2_result, order_by = day),
-		rikishi2_form = ifelse(is.na(rikishi2_form), "0-0", str_extract(rikishi2_form, "\\d+-\\d+"))
-	)
+		rikishi2_form = lag(rikishi2_result),
+		rikishi2_form = ifelse(is.na(rikishi2_form), "0-0", sub("\\(.*\\)", "", rikishi2_form)),
+		rikishi2_w = as.integer(str_match(rikishi2_form, "^(\\d+)")[, 2]),
+		rikishi2_l = as.integer(str_match(rikishi2_form, "^\\d+-(\\d+)")[, 2]),
+		rikishi2_m = as.integer(str_match(rikishi2_form, "^\\d+-\\d+-(\\d+)")[, 2])
+	) %>% 
+	ungroup() %>% 
+	replace_na(replace = list(rikishi1_m = 0, rikishi2_m = 0))
 
 
 # of wins & win rate before this bout
-add_wins_before <- function(data) data %>% 
-	group_by(basho, rikishi1_id) %>% 
-	arrange(day) %>% 
-	mutate(rikishi1_wins_before = cumsum(rikishi1_win) - rikishi1_win) %>% 
-	group_by(basho, rikishi2_id) %>% 
-	arrange(day) %>% 
-	mutate(rikishi2_wins_before = cumsum(rikishi2_win) - rikishi2_win)
+#add_wins_before <- function(data) data %>% 
+#	group_by(basho, rikishi1_id) %>% 
+#	arrange(day) %>% 
+#	mutate(rikishi1_wins_before = cumsum(rikishi1_win) - rikishi1_win) %>% 
+#	group_by(basho, rikishi2_id) %>% 
+#	arrange(day) %>% 
+#	mutate(rikishi2_wins_before = cumsum(rikishi2_win) - rikishi2_win)
 
-add_win_rate_before <- function(data) data %>% 
-	mutate(
-		rikishi1_win_rate_before = ifelse(day > 1, rikishi1_wins_before / (day - 1), .5),
-		rikishi2_win_rate_before = ifelse(day > 1, rikishi2_wins_before / (day - 1), .5)
-	)
+#add_win_rate_before <- function(data) data %>% 
+#	mutate(
+#		rikishi1_win_rate_before = ifelse(day > 1, rikishi1_wins_before / (day - 1), .5),
+#		rikishi2_win_rate_before = ifelse(day > 1, rikishi2_wins_before / (day - 1), .5)
+#	)
 
-# win rate needed for "kachi-koshi"
-add_win_rate_needed <- function(data) data %>% 
+# https://en.wiktionary.org/wiki/kachi-koshi
+add_kachi_koshi <- function(data) data %>% 
 	mutate(
-		rikishi1_win_rate_needed = (8 - rikishi1_wins_before) / (16 - day),
-		rikishi1_win_rate_needed = ifelse(
-			0 < rikishi1_win_rate_needed & rikishi1_win_rate_needed <= 1,
-			rikishi1_win_rate_needed,
-			0
+		rikishi1_kachi_koshi = ifelse(
+			rikishi1_w >= 8,
+			"yes",
+			ifelse(8 - rikishi1_w > 16 - day, "no", "maybe")
 		),
-		rikishi2_win_rate_needed = (8 - rikishi2_wins_before) / (16 - day),
-		rikishi2_win_rate_needed = ifelse(
-			0 < rikishi2_win_rate_needed & rikishi2_win_rate_needed <= 1,
-			rikishi2_win_rate_needed,
-			0
+		rikishi2_kachi_koshi = ifelse(
+			rikishi2_w >= 8,
+			"yes",
+			ifelse(8 - rikishi2_w > 16 - day, "no", "maybe")
 		)
 	)
+
+# winning & losing streaks
+add_streak <- function(data) data %>% 
+	group_by(basho, rikishi1_id) %>% 
+	mutate(
+		# https://stackoverflow.com/a/48552843/17216
+		rikishi1_w_streak = ave(rikishi1_win == 1, cumsum(rikishi1_win == 0), FUN = cumsum),
+		rikishi1_w_streak = lag(rikishi1_w_streak),
+		rikishi1_l_streak = ave(rikishi1_win == 0, cumsum(rikishi1_win == 1), FUN = cumsum),
+		rikishi1_l_streak = lag(rikishi1_l_streak)
+	) %>% 
+	group_by(basho, rikishi2_id) %>% 
+	mutate(
+		rikishi2_w_streak = ave(rikishi2_win == 1, cumsum(rikishi2_win == 0), FUN = cumsum),
+		rikishi2_w_streak = lag(rikishi2_w_streak),
+		rikishi2_l_streak = ave(rikishi2_win == 0, cumsum(rikishi2_win == 1), FUN = cumsum),
+		rikishi2_l_streak = lag(rikishi2_l_streak)
+	) %>% 
+	ungroup() %>% 
+	replace_na(replace = list(rikishi1_w_streak = 0, rikishi1_l_streak = 0, rikishi2_w_streak = 0, rikishi2_l_streak = 0))
+
+# win rate needed for "kachi-koshi"
+#add_win_rate_needed <- function(data) data %>% 
+#	mutate(
+#		rikishi1_win_rate_needed = (8 - rikishi1_wins_before) / (16 - day),
+#		rikishi1_win_rate_needed = ifelse(
+#			0 < rikishi1_win_rate_needed & rikishi1_win_rate_needed <= 1,
+#			rikishi1_win_rate_needed,
+#			0
+#		),
+#		rikishi2_win_rate_needed = (8 - rikishi2_wins_before) / (16 - day),
+#		rikishi2_win_rate_needed = ifelse(
+#			0 < rikishi2_win_rate_needed & rikishi2_win_rate_needed <= 1,
+#			rikishi2_win_rate_needed,
+#			0
+#		)
+#	)
 
 
 # historical head-to-head wins & win rate (excl. walkovers)
 add_head_to_head <- function(data) data %>% 
-	arrange(basho, day) %>% 
+	#arrange(basho, day) %>% 
 	mutate(
-		rikishi1_win_no_fusen = ifelse(kimarite == "fusen" || is.na(rikishi1_win), 0, rikishi1_win),
-		rikishi2_win_no_fusen = ifelse(kimarite == "fusen" || is.na(rikishi2_win), 0, rikishi2_win)
+		rikishi1_win_no_fusen = ifelse(kimarite == "fusen" | is.na(rikishi1_win), 0, rikishi1_win),
+		rikishi2_win_no_fusen = ifelse(kimarite == "fusen" | is.na(rikishi2_win), 0, rikishi2_win)
 	) %>% 
 	group_by(rikishi1_id, rikishi2_id) %>% 
 	mutate(
