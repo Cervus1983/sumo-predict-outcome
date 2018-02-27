@@ -39,9 +39,14 @@ task <- makeClassifTask(
 	positive = "yes"
 )
 
+task %>% 
+	generateFilterValuesData(method = "information.gain") %>% 
+	.[["data"]] %>% 
+	View()
+
 model <- train(learner, task)
 
 # evaluation
 model %>% 
 	predict(task, subset = !data$is_train) %>% 
-	performance(auc)
+	performance(auc) # 0.6309117
