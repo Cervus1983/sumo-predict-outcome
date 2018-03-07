@@ -122,8 +122,8 @@ add_streak <- function(data) data %>%
 # head-to-head wins, streaks & win rate (excl. walkovers)
 add_head_to_head <- function(data) data %>% 
 	mutate(
-		rikishi1_win_no_fusen = ifelse(kimarite == "fusen", 0, rikishi1_win),
-		rikishi2_win_no_fusen = ifelse(kimarite == "fusen", 0, rikishi2_win)
+		rikishi1_win_no_fusen = ifelse(kimarite %in% c(NA, "fusen"), 0, rikishi1_win),
+		rikishi2_win_no_fusen = ifelse(kimarite %in% c(NA, "fusen"), 0, rikishi2_win)
 	) %>% 
 	group_by(rikishi1_id, rikishi2_id) %>% 
 	mutate(
