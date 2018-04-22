@@ -73,7 +73,7 @@ learner2 <- makeTuneWrapper(
 
 # benchmark
 benchmark_results <- benchmark(
-	list(learner1, learner2),
+	list(learner0),
 	task,
 	resamplings = makeFixedHoldoutInstance(
 		train.inds = which(data$is_train),

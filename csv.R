@@ -9,7 +9,7 @@ results <- dataset_as_data_frame("sumo-results")
 write_csv(results, "csv/results.csv")
 
 # odds
-odds <- dataset_as_data_frame("sumo-wrestling-betting-odds") %>% 
+odds <- dataset_as_data_frame("sumo-betting-odds") %>% 
 	mutate(basho = ts %>% substr(., 1, 7) %>% sub("-", ".", .) %>% as.numeric()) %>% 
 	group_by(basho, rikishi1, rikishi2) %>% 
 	arrange(ts) %>% 

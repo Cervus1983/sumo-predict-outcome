@@ -13,13 +13,12 @@ data <- "data.rds" %>%
 		y,
 		mb_open = 1 / odds1_open / (1 / odds1_open + 1 / odds2_open),
 		mb_close = 1 / odds1_close / (1 / odds1_close + 1 / odds2_close),
-		classif.binomial = benchmark_pred[["select(data, -is_train)"]][["classif.binomial.featsel"]][["data"]][["prob.yes"]],
-		classif.xgboost = benchmark_pred[["select(data, -is_train)"]][["classif.xgboost.tuned"]][["data"]][["prob.yes"]]
+		classif.binomial = benchmark_pred[["select(data, -is_train)"]][["classif.binomial"]][["data"]][["prob.yes"]]
 	)
 
 textAUC <- function(pred, x, y, col) text(x, y, sprintf("%.3f", unlist(performance(pred, "auc")@y.values)), c(0, 1), col = col, cex = 2)
 
-par(mfrow = c(2, 3))
+par(mfrow = c(3, 3))
 
 sapply(
 	c(unique(data$basho), "Overall"),
