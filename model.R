@@ -51,4 +51,29 @@ saveRDS(model, "model.rds")
 # evaluation
 model %>% 
 	predict(task, subset = !data$is_train) %>% 
+<<<<<<< HEAD:model.R
 	performance(auc) # 0.6411218
+=======
+	performance(auc) # 0.6331023
+
+
+# optimal EV threshold
+data <- "data.rds" %>% 
+	readRDS() %>% 
+	filter(!is_train) %>% 
+	mutate(rikishi1_win_prob = predict(model, task, subset = !data$is_train)[["data"]][["prob.yes"]])
+
+do.call(
+	rbind,
+	lapply(
+		1 + 0:10 / 10,
+		function(ev_threshold) data %>% 
+			mutate(gross = ifelse(rikishi1_win_prob * odds1_open > ev_threshold, rikishi1_win * odds1_open - 1, 0)) %>% 
+			summarise(
+				ev_threshold,
+				bets = sum(gross != 0),
+				gross = sum(gross)
+			)
+	)
+)
+>>>>>>> 1f852f59d648b0cb94f9447f8b6d8e6145b39e76:model/binomial.R
