@@ -49,7 +49,7 @@ saveRDS(model, "model/binomial.rds")
 # evaluation
 model %>% 
 	predict(task, subset = !data$is_train) %>% 
-	performance(auc) # 0.6331853
+	performance(auc) # 0.6331023
 
 
 # optimal EV threshold
