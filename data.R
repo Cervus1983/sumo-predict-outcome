@@ -33,12 +33,5 @@ results %>%
 	) %>% 
 	# add odds
 	left_join(., odds) %>% 
-	# extra columns for ML
-	mutate(
-		is_train = is.na(odds1_open),
-		y = recode(rikishi1_win + 1, "no", "yes")
-	) %>% 
-	# character variables -> factors
-	mutate_if(is.character, as.factor) %>% 
 	# save
 	saveRDS("data.rds")

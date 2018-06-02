@@ -4,6 +4,10 @@ library(tidyverse)
 # data
 data <- "data.rds" %>% 
 	readRDS() %>% 
+	mutate(
+		is_train = basho < 2018.05,
+		y = recode(rikishi1_win + 1, "no", "yes")
+	) %>% 
 	select(
 		-basho,
 		-rikishi1_id,
@@ -28,59 +32,23 @@ data <- "data.rds" %>%
 		-odds1_close,
 		-odds2_close
 	) %>% 
+	mutate_if(is.character, as.factor) %>% 
 	mutate_if(is.ordered, as.integer)
 
-data <- createDummyFeatures(
-	data,
-	target = "y",
-	cols = data %>% 
-		select(-y) %>% 
-		select_if(is.factor) %>% 
-		names()
-)
+# model
+learner <- makeLearner("classif.binomial", predict.type = "prob")
 
-# classification task
 task <- makeClassifTask(
 	data = select(data, -is_train),
 	target = "y",
 	positive = "yes"
 )
 
-# learner 0: glm
-learner0 <- makeLearner("classif.binomial", predict.type = "prob")
+model <- train(learner, task, subset = data$is_train)
 
-# learner 1: glm (feature selection)
-learner1 <- makeFeatSelWrapper(
-	makeLearner("classif.binomial", predict.type = "prob"),
-	resampling = makeResampleDesc("CV", iters = 3),
-	measures = auc,
-	control = makeFeatSelControlSequential(method = "sfbs")
-)
+saveRDS(model, "model.rds")
 
-# learner 2: xgboost (hyperparameter tuning)
-learner2 <- makeTuneWrapper(
-	makeLearner("classif.xgboost", predict.type = "prob"),
-	resampling = makeResampleDesc("CV", iters = 3),
-	measures = auc,
-	par.set = makeParamSet(
-		makeNumericParam("eta", lower = .05, upper = .5),
-		makeIntegerParam("max_depth", lower = 1, upper = 10),
-		makeIntegerParam("nrounds", lower = 10, upper = 200),
-		makeNumericParam("lambda", lower = -1, upper = 0, trafo = function(x) 10^x)
-	),
-	control = makeTuneControlRandom(maxit = 300)
-)
-
-# benchmark
-benchmark_results <- benchmark(
-	list(learner0),
-	task,
-	resamplings = makeFixedHoldoutInstance(
-		train.inds = which(data$is_train),
-		test.inds = which(!data$is_train),
-		size = nrow(data)
-	),
-	measures = auc
-)
-
-saveRDS(benchmark_results, "benchmark.rds")
+# evaluation
+model %>% 
+	predict(task, subset = !data$is_train) %>% 
+	performance(auc) # 0.6411218

@@ -24,3 +24,23 @@ data %>%
 		bets = sum(EV != 0),
 		gross = sum(EV)
 	)
+
+# optimal EV threshold
+data <- "data.rds" %>% 
+	readRDS() %>% 
+	filter(!is_train) %>% 
+	mutate(rikishi1_win_prob = predict(model, task, subset = !data$is_train)[["data"]][["prob.yes"]])
+
+do.call(
+	rbind,
+	lapply(
+		1 + 0:10 / 10,
+		function(ev_threshold) data %>% 
+			mutate(gross = ifelse(rikishi1_win_prob * odds1_open > ev_threshold, rikishi1_win * odds1_open - 1, 0)) %>% 
+			summarise(
+				ev_threshold,
+				bets = sum(gross != 0),
+				gross = sum(gross)
+			)
+	)
+)
